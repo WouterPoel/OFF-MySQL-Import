@@ -54,7 +54,7 @@ FILE_PATTERN = "*.csv"
 ## Running the Importer
 
 ```bash
-python import_openfoodfacts.py
+python OFF-import.py
 ```
 
 ## Example Output

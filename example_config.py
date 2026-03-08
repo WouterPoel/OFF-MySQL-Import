@@ -13,11 +13,11 @@ ENCODING = "utf-8"
 BATCH_SIZE = 2000
 
 IMPORT_FROM_FOLDER = True
-IMPORT_FOLDER = r"C:\Users\Wouter\Desktop\export"
+IMPORT_FOLDER = r"C:\Users\John\Desktop\export"
 FILE_PATTERN = "*.csv"
 
 FILES_TO_IMPORT = [
-    r"C:\Users\Wouter\Desktop\export\en.openfoodfacts.org.products.csv",
+    r"C:\Users\John\User\export\en.openfoodfacts.org.products.csv",
 ]
 
 CREATE_TABLE_IF_NOT_EXISTS = True

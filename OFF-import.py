@@ -45,7 +45,7 @@ BATCH_SIZE = 2000         # Try 2000 first. Increase later if stable.
 # OPTION A: import all matching files from a folder
 # ---------------------------------------------------------
 IMPORT_FROM_FOLDER = True
-IMPORT_FOLDER = r"C:\Users\Wouter\Desktop\export"
+IMPORT_FOLDER = r"C:\Users\John\Desktop\export"
 FILE_PATTERN = "*.csv"    # Change to *.txt if needed
 
 # ---------------------------------------------------------
@@ -53,8 +53,8 @@ FILE_PATTERN = "*.csv"    # Change to *.txt if needed
 # Used only if IMPORT_FROM_FOLDER = False
 # ---------------------------------------------------------
 FILES_TO_IMPORT = [
-    r"C:\Users\Wouter\Desktop\export\en.openfoodfacts.org.products.csv",
-    # r"C:\Users\Wouter\Desktop\export\file2.csv",
+    r"C:\Users\John\Desktop\export\en.openfoodfacts.org.products.csv",
+    # r"C:\Users\John\Desktop\export\file2.csv",
 ]
 
 # ---------------------------------------------------------

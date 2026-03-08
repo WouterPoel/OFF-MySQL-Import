@@ -1,329 +1,149 @@
-# Open Food Facts MySQL Import
+# Open Food Facts → MySQL Importer (Python)
 
-## What is Open Food Facts? 
-**Open Food Facts** is an awesome project that provides a database of food products with ingredients, allergens, nutrition facts and all the tidbits of information they can find on product labels. 
+A high-performance Python importer for loading large Open Food Facts CSV/TXT datasets into MySQL.
 
-**Open Food Facts** is a non-profit association of volunteers. 25.000+ contributors like you have added 4 million products from 150 countries using our cross-platform Flutter app for Android & iPhone or their camera to scan barcodes and upload pictures of products and their labels.
+Designed to handle **millions of rows**, extremely large fields, and long-running imports safely.
 
-Data about food is of public interest and has to be open. The complete database is published as open data and can be reused by anyone and for any use. Check-out the cool reuses or make your own!
+## Features
 
-You can check out the project at: [Open Food Facts](https://world.openfoodfacts.org/) and find their
-GitHub at: [Open Food Facts GitHub](https://github.com/openfoodfacts)
+- Fast **multi-row batch inserts**
+- Import **multiple CSV files from a folder**
+- **Resume support** if the script stops
+- Automatic **table creation**
+- Smart **column name sanitization**
+- **Error logging**
+- **Progress tracking**
+- Supports **very large fields**
 
-## Key features of the script
+## Installation
 
-- multi-file CSV import  
-- automatic MySQL schema creation  
-- batch inserts for speed  
-- resume after interruption  
-- corrupted row handling  
-- error logging  
-- extremely large field support  
-- scalable to millions of rows  
+### 1. Clone the repository
 
-## Open Food Facts MySQL Import script
-
-### 1. CSV / Data Handling Functions
-
-```sanitize_column_name(name, used_names)```
-
-**Purpose:**
-
-Converts a column name from the CSV header into a safe MySQL column name.
-
-#### What it does:
-- lowercases the name
-- removes invalid characters
-- replaces spaces with _
-- ensures uniqueness
-- prevents names starting with numbers
-
-**Example:**
-
-```"Product Name (EN)" → product_name_en```
-
-```normalize_row(row, expected_len)```
-
-**Purpose:**
-
-Ensures every row has the same number of fields as the header.
-
-**What it does:**
-- pads missing columns with None
-- trims extra columns
-- converts empty strings "" to NULL
-
-**Example:**
-
-```["apple", "fruit"] ``` 
-
-```→ ["apple", "fruit", None, None]```
-
-### 2. Database Table Functions
-
-```create_table(cursor, table_name, columns)```
-
-**Purpose:**
-
-Creates the MySQL table automatically if it doesn't exist.
-
-**Important details:**
-- every column becomes ```LONGTEXT```
-- adds an auto-increment ```id_import```
-- uses ```utf8mb4```
-
-```truncate_table(cursor, table_name)```
-
-**Purpose:**
-
-Deletes all rows from the table.
-
-**Used when:**
-
-```TRUNCATE_TABLE_BEFORE_IMPORT = True```
-
-### 3. File Handling Functions
-
-**Purpose:**
-
-Builds the list of files to import.
-
-#### **Supports two modes:**
-
-**Folder mode**
-
-```IMPORT_FOLDER = ...```
-
-```FILE_PATTERN = "*.csv"```
-
-**Manual list mode**
-
-```FILES_TO_IMPORT = [...]```
-
-```read_and_prepare_header(file_path)```
-
-**Purpose:**
-
-Reads the first row (header) of the CSV file.
-
-Returns:
-
-```raw_header```
-
-```sanitized_header```
-
-The sanitized header becomes the MySQL column names.
-
-### 4. SQL Insert Functions
-
-```build_multirow_insert_sql(table_name, columns, row_count)```
-
-**Purpose:**
-
-Builds a multi-row INSERT statement.
-
-Example generated SQL:
-
-[
- [1,2],
-
- [3,4]
-]
-
-becomes:
-
-```[1,2,3,4]```
-
-```insert_batch(cursor, table_name, columns, batch)```
-
-**Purpose:**
-
-Executes the multi-row SQL insert.
-
-**Steps:**
-**1.** build SQL
-**2.** flatten parameters
-**3.** execute query
-
-### 5. MySQL Performance Optimization Functions
-
-**Purpose:**
-
-Temporarily disables expensive MySQL checks to speed up imports.
-
-Disables:
-
-```FOREIGN_KEY_CHECKS```
-
-```UNIQUE_CHECKS```
-
-This significantly improves insert performance.
-
-```restore_session(cursor)```
-
-**Purpose:**
-
-Restores MySQL settings after import.
-
-### 6. Resume System Functions
-
-The importer supports resuming if interrupted.
-
-State stored in:
-
-```import_state.json```
-
-```load_state()```
-
-**Purpose:**
-
-Loads saved progress from the resume file.
-
-**Example**
-
+```bash
+git clone https://github.com/WouterPoel/OFF-MySQL-Import.git
+cd OFF-MySQL-Import
 ```
+
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+Recommended Python version:
+
+```text
+Python 3.9+
+```
+
+## Configuration
+
+Copy `example_config.py` to `config.py` and adjust the values.
+
+```python
+MYSQL_HOST = "localhost"
+MYSQL_PORT = 3306
+MYSQL_USER = "root"
+MYSQL_PASSWORD = ""
+MYSQL_DATABASE = "your_database"
+
+IMPORT_FOLDER = r"C:\Users\John\Desktop\export"
+FILE_PATTERN = "*.csv"
+```
+
+## Running the Importer
+
+```bash
+python import_openfoodfacts.py
+```
+
+## Example Output
+
+```text
+CSV field size limit set to: 9223372036854775807
+Using Python: C:\Python311\python.exe
+
+Files to import:
+ - en.openfoodfacts.org.products.csv
+
+Connecting to MySQL...
+
+Header source file: en.openfoodfacts.org.products.csv
+Detected 203 columns.
+
+Processing: en.openfoodfacts.org.products.csv
+  Resuming from line 2
+  Imported 10,000 rows
+  Imported 20,000 rows
+
+Finished en.openfoodfacts.org.products.csv:
+  3,425,621 imported
+  24 skipped
+```
+
+## Performance Benchmarks
+
+Typical speed:
+
+```text
+50k – 150k rows / minute
+```
+
+Performance depends on disk speed, MySQL configuration, batch size, and RAM.
+
+## Resume System
+
+If the script stops, it can **resume automatically**.
+
+The importer creates:
+
+```text
+import_state.json
+```
+
+Example:
+
+```json
 {
-  "file1.csv": 45000,
-  "file2.csv": "done"
+  "en.openfoodfacts.org.products.csv": 1850000
 }
 ```
 
-```save_state(state)```
+## Troubleshooting
 
-**Purpose:**
+### `field larger than field limit (131072)`
 
-Writes updated resume progress to disk.
+The script includes a stronger CSV field limit fix at startup.
 
-```clear_state()```
+### MySQL “packet too large”
 
-**Purpose:**
+Increase:
 
-Deletes the resume state file for a fresh import.
-
-```get_resume_line(state, file_path)```
-
-**Purpose:**
-
-Returns the line number where import should resume.
-
-Default:
-
-```2 (after header)```
-
-```set_resume_line(state, file_path, next_line_number)```
-
-**Purpose:**
-
-Updates resume position after each committed batch.
-
-```mark_file_done(state, file_path)```
-
-**Purpose:**
-
-Marks a file as fully imported
-
-Ecample in state file:
-
-```"file.csv": "done"```
-
-```is_file_done(state, file_path)```
-
-**Purpose:**
-
-Checks if a file has already been completely imported.
-
-Prevents duplicate imports.
-
-### 7. Logging Functions
-
-```log_error(message)```
-
-**Purpose:**
-
-Writes error messages to:
-
-```import_errors.log```
-
-Used for:
-- corrupted rows
-- parsing failures
-- header mismatches
-- file processing errors
-
-### 8. Import Engine
-
-```import_single_file(cursor, conn, file_path, table_name, columns, state)```
-
-**Purpose:**
-
-Core import function.
-
-Steps performed:
-
-**1.** open CSV file  
-**2.** skip header  
-**3.** resume from saved line  
-**4.** read rows  
-**5.** normalize rows  
-**6.** batch insert  
-**7.** commit transaction  
-**8.** update resume state  
-**9.** log row errors  
-**10.** mark file complete  
-
-### 9. Main Controller
-
-```main()```
-
-**Purpose:**
-
-Coordinates the entire import process.
-
-Steps:
-
-**1.** load resume state  
-**2.** discover files to import  
-**3.** connect to MySQL  
-**4.** create table if necessary  
-**5.** iterate through files  
-**6.** call import_single_file  
-**7.** restore MySQL settings  
-**8.** print final summary  
-
-### 10. Program Entry Point
-
-```if __name__ == "__main__":```
-
-Runs:
-
-```main()```
-
-This ensures the script executes when run directly.
-
-### Complete Function List
-
-```
-sanitize_column_name()  
-normalize_row()  
-create_table()  
-truncate_table()  
-get_files_to_import()  
-read_and_prepare_header()  
-build_multirow_insert_sql()  
-flatten_batch()  
-optimize_session()  
-restore_session()  
-insert_batch()  
-load_state()  
-save_state()  
-clear_state()  
-log_error()  
-get_resume_line()  
-set_resume_line()  
-mark_file_done()  
-is_file_done()  
-import_single_file()  
-main()  
+```text
+max_allowed_packet = 1G
 ```
 
-**Total functions: 20**
+### Script stops halfway
+
+Just run it again:
+
+```bash
+python import_openfoodfacts.py
+```
+
+It resumes automatically.
+
+## Project Structure
+
+```text
+openfoodfacts-mysql-importer/
+├── import_openfoodfacts.py
+├── example_config.py
+├── requirements.txt
+├── .gitignore
+└── README.md
+```
+
+## License
+
+MIT

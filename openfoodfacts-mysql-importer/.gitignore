@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+config.py
+import_state.json
+import_errors.log
+.env
+venv/
+.venv/
